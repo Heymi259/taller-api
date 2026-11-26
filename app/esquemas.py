@@ -20,4 +20,4 @@ class ServicioActualizar(BaseModel):
 
 
 class Servicio(ServicioCrear):
-    """Salida: los cinco campos completos."""
+    """Lo que la API devuelve: los cinco campos completos."""
