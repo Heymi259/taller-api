@@ -43,3 +43,26 @@ def crear_servicio(nueva: ServicioCrear) -> dict:
         )
     SERVICIOS.append(nueva.model_dump())
     return SERVICIOS[-1]
+
+@router.get("/cotizar-flota")
+def cotizar_flota(
+    vehiculos: Annotated[int, Query(ge=1, le=50)],
+    complejidad: Annotated[int | None, Query(ge=1, le=5)] = None,
+) -> dict:
+    seleccion = [s for s in SERVICIOS if complejidad is None or s["complejidad"] == complejidad]
+    if not seleccion:
+        raise HTTPException(404, f"No hay servicios con complejidad {complejidad}")
+    costo_servicios = sum(s["costo"] for s in seleccion)
+    con_repuesto = sum(1 for s in seleccion if s["requiere_repuesto"])
+    costo_base = costo_servicios * vehiculos
+    descuento = vehiculos >= 10
+    costo_estimado = costo_base * 0.82 if descuento else costo_base
+    return {
+        "servicios": len(seleccion),
+        "vehiculos": vehiculos,
+        "costo_promedio": round(costo_servicios / len(seleccion), 2),
+        "costo_base": costo_base,
+        "descuento_aplicado": descuento,
+        "costo_estimado": round(costo_estimado, 2),
+        "porcentaje_con_repuesto": round(con_repuesto * 100 / len(seleccion), 1),
+    }
