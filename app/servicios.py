@@ -113,3 +113,31 @@ def cotizar_flota(
         "costo_estimado": round(costo_estimado, 2),
         "porcentaje_con_repuesto": round(con_repuesto * 100 / len(seleccion), 1),
     }
+
+@router.get("/progreso-orden")
+def progreso_orden(ejecutados: Annotated[list[str] | None, Query()] = None) -> dict:
+    codigos = {c.upper() for c in (ejecutados or [])}
+    total = costo_pendiente = 0
+    hechos = pendientes = 0
+    mas_economico = None
+    menor_costo = None
+    for servicio in SERVICIOS:
+        total += 1
+        if servicio["codigo"] in codigos:
+            hechos += 1
+        else:
+            pendientes += 1
+            costo_pendiente += servicio["costo"]
+            if menor_costo is None or servicio["costo"] < menor_costo:
+                menor_costo = servicio["costo"]
+                mas_economico = servicio["codigo"]
+    if total == 0:
+        raise HTTPException(404, "No hay servicios registrados")
+    return {
+        "total": total,
+        "ejecutados": hechos,
+        "pendientes": pendientes,
+        "porcentaje_avance": round(hechos * 100 / total, 1),
+        "costo_pendiente": costo_pendiente,
+        "pendiente_mas_economico": mas_economico,
+    }
