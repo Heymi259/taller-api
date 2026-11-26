@@ -141,3 +141,19 @@ def progreso_orden(ejecutados: Annotated[list[str] | None, Query()] = None) -> d
         "costo_pendiente": costo_pendiente,
         "pendiente_mas_economico": mas_economico,
     }
+
+
+@router.get("/{codigo}", response_model=Servicio)
+def ver_servicio(servicio: ServicioEncontrado) -> dict:
+    return servicio
+
+
+@router.put("/{codigo}", response_model=Servicio)
+def actualizar_servicio(cambios: ServicioActualizar, servicio: ServicioEncontrado) -> dict:
+    servicio.update(cambios.model_dump(exclude_unset=True))
+    return servicio
+
+
+@router.delete("/{codigo}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_servicio(servicio: ServicioEncontrado) -> None:
+    SERVICIOS.remove(servicio)
