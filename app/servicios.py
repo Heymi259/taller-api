@@ -20,3 +20,27 @@ def obtener_servicio(codigo: str) -> dict:
 
 
 ServicioEncontrado = Annotated[dict, Depends(obtener_servicio)]
+
+
+@router.get("", response_model=list[Servicio])
+def listar_servicios(
+    complejidad: Annotated[int | None, Query(ge=1, le=5)] = None,
+    solo_con_repuesto: bool = False,
+) -> list[dict]:
+    resultado = SERVICIOS
+    if complejidad is not None:
+        resultado = [s for s in resultado if s["complejidad"] == complejidad]
+    if solo_con_repuesto:
+        resultado = [s for s in resultado if s["requiere_repuesto"]]
+    return resultado
+
+
+@router.post("", response_model=Servicio, status_code=status.HTTP_201_CREATED)
+def crear_servicio(nuevo: ServicioCrear) -> dict:
+    if any(s["codigo"] == nuevo.codigo for s in SERVICIOS):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"El servicio '{nuevo.codigo}' ya existe",
+        )
+    SERVICIOS.append(nuevo.model_dump())
+    return SERVICIOS[-1]
